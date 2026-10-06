@@ -1,0 +1,15 @@
+{
+  "originHash" : "fd298e87260bd8cd9b89eb0e3717f68b396780091235ecb75a075d948d52c285",
+  "pins" : [
+    {
+      "identity" : "sebbu-deflate",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/MarSe32m/sebbu-deflate",
+      "state" : {
+        "revision" : "ee711638d22f43666e53f5a6d403614d1b7b667b",
+        "version" : "1.26.2"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Sebastian Toivonen
 // SPDX-License-Identifier: MIT
+
 public enum PersistentCacheHash {
     public static func digest(_ string: String) -> String {
         let a = fnv1a(string.utf8, seed: 0xcbf29ce484222325)
@@ -7,7 +8,7 @@ public enum PersistentCacheHash {
         return hex(a) + hex(b)
     }
     
-    public static func fnv1a<S: Sequence>(
+    private static func fnv1a<S: Sequence>(
         _ bytes: S, seed: UInt64
     ) -> UInt64 where S.Element == UInt8 {
         bytes.reduce(seed) { ($0 ^ UInt64($1)) &* 0x100000001b3 }

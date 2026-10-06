@@ -6,6 +6,7 @@ import FoundationEssentials
 #else
 import Foundation
 #endif
+import SebbuCache
 
 public enum JSONResultCodec<Value: Codable & Sendable>: ResultCodec {
     public static var fileExtension: String { "json" }
