@@ -41,7 +41,7 @@ Add the package to your Swift package dependencies:
 ```swift
 .package(
     url: "https://github.com/MarSe32m/sebbu-cache",
-    from: "0.1.0"
+    from: "0.2.0"
 )
 ```
 
