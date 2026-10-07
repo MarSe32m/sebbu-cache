@@ -7,8 +7,9 @@ import FoundationEssentials
 import Foundation
 #endif
 import SebbuCache
-import SebbuDeflate
-import SebbuDeflateFoundation
+
+private import SebbuDeflate
+private import SebbuDeflateFoundation
 
 public enum FileCacheStoreError: Error, Equatable, Sendable {
     case invalidResultFileExtension(String)
@@ -36,10 +37,7 @@ public struct FileCacheStore: CacheStore {
 
     public func load<C: CachedEntry>(_ entry: C) throws -> C.Result? {
         let descriptor = entry.cacheDescriptor
-        let paths = try paths(
-            for: descriptor.key,
-            resultFileExtension: C.Codec.fileExtension
-        )
+        let paths = try paths(for: descriptor.key)
         let fileManager = FileManager.default
 
         guard fileManager.fileExists(atPath: paths.metadata.path) else {
@@ -60,20 +58,17 @@ public struct FileCacheStore: CacheStore {
             return nil
         }
 
-        guard fileManager.fileExists(atPath: paths.result.path) else {
+        guard fileManager.fileExists(atPath: paths.entry.path) else {
             return nil
         }
 
-        let resultData = try Data(compressedContentsOf: paths.result)
-        return try C.Codec.decode(Array(resultData))
+        let entryData = try Data(compressedContentsOf: paths.entry)
+        return try C.Codec.decode(Array(entryData))
     }
 
     public func store<C: CachedEntry>(_ result: C.Result, for entry: C) throws {
         let descriptor = entry.cacheDescriptor
-        let paths = try paths(
-            for: descriptor.key,
-            resultFileExtension: C.Codec.fileExtension
-        )
+        let paths = try paths(for: descriptor.key)
         let fileManager = FileManager.default
 
         if fileManager.fileExists(atPath: paths.metadata.path) {
@@ -93,8 +88,8 @@ public struct FileCacheStore: CacheStore {
             withIntermediateDirectories: true
         )
 
-        let resultData = Data(try C.Codec.encode(result))
-        try resultData.writeCompressed(to: paths.result, options: .atomic)
+        let entryData = Data(try C.Codec.encode(result))
+        try entryData.writeCompressed(to: paths.entry, options: .atomic)
 
         let metadata = CacheMetadata(
             formatVersion: Self.metadataFormatVersion,
@@ -114,15 +109,8 @@ public struct FileCacheStore: CacheStore {
     }
 
     private func paths(
-        for key: CacheKey,
-        resultFileExtension: String
+        for key: CacheKey
     ) throws -> EntryPaths {
-        guard isValidFileExtension(resultFileExtension) else {
-            throw FileCacheStoreError.invalidResultFileExtension(
-                resultFileExtension
-            )
-        }
-
         let root = URL(fileURLWithPath: rootDirectory, isDirectory: true)
         let namespace = PersistentCacheHash.digest(key.namespace)
         let prefix = String(key.digest.prefix(2))
@@ -139,29 +127,18 @@ public struct FileCacheStore: CacheStore {
                 "metadata.json",
                 isDirectory: false
             ),
-            result: directory.appendingPathComponent(
-                "result.\(resultFileExtension)",
+            entry: directory.appendingPathComponent(
+                "entry",
                 isDirectory: false
             )
         )
-    }
-
-    private func isValidFileExtension(_ fileExtension: String) -> Bool {
-        guard !fileExtension.isEmpty,
-              fileExtension != ".",
-              fileExtension != ".." else {
-            return false
-        }
-
-        return !fileExtension.contains("/") &&
-               !fileExtension.contains("\\")
     }
 }
 
 private struct EntryPaths {
     let directory: URL
     let metadata: URL
-    let result: URL
+    let entry: URL
 }
 
 private struct CacheMetadataHeader: Decodable {

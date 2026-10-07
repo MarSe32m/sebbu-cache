@@ -3,7 +3,6 @@
 
 public protocol CacheStore: Sendable {
     func load<C: CachedEntry>(_ entry: C) throws -> C.Result?
-    
     func store<C: CachedEntry>(_ result: C.Result, for entry: C) throws
 }
 
