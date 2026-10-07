@@ -30,7 +30,8 @@ let package = Package(
             name: "SebbuCacheFoundation",
             dependencies: [
                 .product(name: "SebbuDeflate", package: "sebbu-deflate"),
-                .product(name: "SebbuDeflateFoundation", package: "sebbu-deflate")
+                .product(name: "SebbuDeflateFoundation", package: "sebbu-deflate"),
+                "SebbuCache"
             ]
         ),
         .testTarget(
