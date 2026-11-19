@@ -19,6 +19,7 @@ public enum FileCacheStoreError: Error, Equatable, Sendable {
 public struct FileCacheStore: CacheStore {
     public static let metadataFormatVersion = 1
     public let rootDirectory: String
+    public var compressionLevel: Int
     
     public static var defaultRootDirectory: String {
         URL(
@@ -29,10 +30,17 @@ public struct FileCacheStore: CacheStore {
         .path
     }
 
+    
+    /// Initializes a new `FileCacheStore`
+    /// - Parameters:
+    ///   - rootDirectory: Root directory where the cached entries will be written to and read from.
+    ///   - compressionLevel: Compression level used for gzip. Allowed values are [0,12]. Default is 6.
     public init(
-        rootDirectory: String = Self.defaultRootDirectory
+        rootDirectory: String = Self.defaultRootDirectory,
+        compressionLevel: Int = 6
     ) {
         self.rootDirectory = rootDirectory
+        self.compressionLevel = compressionLevel
     }
 
     public func load<C: CachedEntry>(_ entry: C) throws -> C.Result? {
@@ -89,7 +97,7 @@ public struct FileCacheStore: CacheStore {
         )
 
         let entryData = Data(try C.Codec.encode(result))
-        try entryData.writeCompressed(to: paths.entry, options: .atomic)
+        try entryData.writeCompressed(to: paths.entry, options: .atomic, compressionLevel: compressionLevel)
 
         let metadata = CacheMetadata(
             formatVersion: Self.metadataFormatVersion,
@@ -146,8 +154,9 @@ private struct CacheMetadataHeader: Decodable {
 }
 
 private extension Data {
-    func writeCompressed(to: URL, options: Data.WritingOptions) throws {
-        var compressed = try DeflateCompressor.compress(format: .gzip, level: .best, bytes: self)
+    func writeCompressed(to: URL, options: Data.WritingOptions, compressionLevel: Int) throws {
+        let compressionLevel = DeflateCompressionLevel(rawValue: Int32(truncatingIfNeeded: compressionLevel)) ?? .best
+        var compressed = try DeflateCompressor.compress(format: .gzip, level: compressionLevel, bytes: self)
         compressed.append(contentsOf: repeatElement(0, count: MemoryLayout<Int>.size))
         do {
             var bytes = compressed.mutableBytes

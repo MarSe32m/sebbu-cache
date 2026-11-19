@@ -20,11 +20,16 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.1.1"),
         .package(url: "https://github.com/MarSe32m/sebbu-deflate", from: "1.26.2")
     ],
     targets: [
         .target(
-            name: "SebbuCache"
+            name: "SebbuCache",
+            dependencies: [
+                .product(name: "ComplexModule", package: "swift-numerics"),
+                .product(name: "RealModule", package: "swift-numerics")
+            ]
         ),
         .target(
             name: "SebbuCacheFoundation",
@@ -36,7 +41,11 @@ let package = Package(
         ),
         .testTarget(
             name: "SebbuCacheTests",
-            dependencies: ["SebbuCache"]
+            dependencies: [
+                "SebbuCache",
+                .product(name: "ComplexModule", package: "swift-numerics"),
+                .product(name: "RealModule", package: "swift-numerics")
+            ]
         ),
         .testTarget(
             name: "SebbuCacheFoundationTests",

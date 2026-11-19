@@ -16,6 +16,7 @@ Foundation-free core functionality:
 - `CachedEntry` for declaring a cacheable computation and its result type.
 - `CacheKey` and `CacheDescriptor` for stable lookup keys.
 - `ResultCodec` for controlling result serialization.
+- `BinaryResultCodec` for bit-exact numerical results with an explicit field order.
 - `CacheStore` for pluggable storage backends.
 - `CacheMetadata` for storing provenance alongside cached data.
 
@@ -207,7 +208,37 @@ public protocol ResultCodec: Sendable {
 }
 ```
 
-This keeps storage format independent of cache identity. Large numerical results can use a compact binary codec while smaller `Codable` values can use `JSONResultCodec` from `SebbuCacheFoundation`.
+This keeps storage format independent of cache identity.
+
+### Binary results
+
+Declare the fields in wire order and use `typealias Codec = BinaryResultCodec<YourResult>` on the cache entry.
+
+```swift
+import SebbuCache
+import ComplexModule
+import RealModule
+
+struct Correlation: BinaryCodable {
+    let energy: Double
+    let timesInPicoseconds: [Double]
+    let values: [Complex<Double>]
+
+    func encode(into encoder: inout BinaryEncoder) {
+        encoder.append(energy)
+        encoder.append(timesInPicoseconds)
+        encoder.append(values)
+    }
+}
+
+extension Correlation {
+    init(from decoder: inout BinaryDecoder) throws {
+        energy = try decoder.read()
+        timesInPicoseconds = try decoder.readArray()
+        values = try decoder.readArray()
+    }
+}
+```
 
 ## Custom cache stores
 
